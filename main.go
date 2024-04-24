@@ -1,0 +1,45 @@
+package main
+
+import (
+	"log"
+	"net/http"
+)
+
+// Define a home handler funciton which writes a byte slice containing "hello from Snippetbox" as the response body.
+func home(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("hello from Snippetbox"))
+}
+
+// Add a snippetView handler function.
+func snipppetView(w http.ResponseWriter, r *http.Request) {
+	snippetId := r.PathValue("id")
+	w.Write([]byte("Display a specific snippet... " + snippetId))
+}
+
+// Add a snippetCreate handler function.
+func snipppetCreate(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Display a form for creating a new snippet..."))
+}
+
+func main() {
+	// use the http.NewServeMux() function to initialize a new servemux, then
+	// register the home function as the handler for the "/" URL pattern.
+	mux := http.NewServeMux()
+	// The "{$}" prevents trailing slash URLs from becoming "catch it all"
+	mux.HandleFunc("/{$}", home)
+	mux.HandleFunc("/snippet/view/{id}", snipppetView)
+	mux.HandleFunc("/snippet/create", snipppetCreate)
+
+	// Print a log message to say that the server is starting.
+	log.Print("staging server on :4000")
+
+	// use the http.ListerAndServe() function to start a new web server.
+	// we pass in two parameters:
+	// - the TCP network address to listen on (in this case ":4000")
+	// - the servemux we just created
+	// If http.ListenAndServe() returns an error we use the log.Fatal()
+	// function to log the error message and exit. Note that any error returned by
+	// http.ListenAndServe() is always non-nil.
+	err := http.ListenAndServe(":4000", mux)
+	log.Fatal(err)
+}
