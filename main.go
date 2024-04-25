@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 // Define a home handler funciton which writes a byte slice containing "hello from Snippetbox" as the response body.
@@ -12,8 +14,19 @@ func home(w http.ResponseWriter, r *http.Request) {
 
 // Add a snippetView handler function.
 func snipppetView(w http.ResponseWriter, r *http.Request) {
-	snippetId := r.PathValue("id")
-	w.Write([]byte("Display a specific snippet... " + snippetId))
+	// Extract the value of the id wildcard from the request using r.PathValue()
+	// it can't be converted to an integer, or the value is less thatn 1, we
+	// return a 404 page not found reponse
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil || id < 1 {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Use the fmt.Sprintf() function to interpolate the id value with a message,
+	// then write it as the HTTP response.
+	msg := fmt.Sprintf("Display a specific snippet with ID %d...", id)
+	w.Write([]byte(msg))
 }
 
 // Add a snippetCreate handler function.
@@ -27,7 +40,7 @@ func main() {
 	mux := http.NewServeMux()
 	// The "{$}" prevents trailing slash URLs from becoming "catch it all"
 	mux.HandleFunc("/{$}", home)
-	mux.HandleFunc("/snippet/view/{id}", snipppetView)
+	mux.HandleFunc("/snippet/view/{id}", snipppetView) // Add the {id} wildcard segment
 	mux.HandleFunc("/snippet/create", snipppetCreate)
 
 	// Print a log message to say that the server is starting.
