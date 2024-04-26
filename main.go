@@ -34,14 +34,21 @@ func snipppetCreate(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Display a form for creating a new snippet..."))
 }
 
+// Add a snippetCreatePost handler function.
+func snippetCreatePost(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Save a new snippet..."))
+}
+
 func main() {
 	// use the http.NewServeMux() function to initialize a new servemux, then
 	// register the home function as the handler for the "/" URL pattern.
 	mux := http.NewServeMux()
 	// The "{$}" prevents trailing slash URLs from becoming "catch it all"
-	mux.HandleFunc("/{$}", home)
-	mux.HandleFunc("/snippet/view/{id}", snipppetView) // Add the {id} wildcard segment
-	mux.HandleFunc("/snippet/create", snipppetCreate)
+	mux.HandleFunc("GET /{$}", home)
+	mux.HandleFunc("GET /snippet/view/{id}", snipppetView) // Add the {id} wildcard segment
+	mux.HandleFunc("GET /snippet/create", snipppetCreate)
+	// Create the new route, which is restricted to POST requests only.
+	mux.HandleFunc("POST /snippet/create", snippetCreatePost)
 
 	// Print a log message to say that the server is starting.
 	log.Print("staging server on :4000")
