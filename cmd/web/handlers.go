@@ -19,7 +19,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	// to note taht the file containing our base template must be the FIRST
 	files := []string{
 		"./ui/html/base.tmpl",
-		"./ui/html/pages/hom.tmpl",
+		"./ui/html/pages/home.tmpl",
 		"./ui/html/partials/nav.tmpl", // Include the navigation partial in the template files.
 	}
 
