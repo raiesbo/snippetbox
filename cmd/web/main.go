@@ -2,9 +2,17 @@ package main
 
 import (
 	"flag"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 )
+
+// Define an applicaton structu to hold the application-wide dependencies for the
+// web application. For now we'll only include the structured looger , but we'll
+// add more to this as the build progresses.
+type application struct {
+	logger *slog.Logger
+}
 
 func main() {
 	// Define a new command-line flag with the name 'addr', a default value of ":4000"
@@ -15,6 +23,13 @@ func main() {
 	// This read id the command-line flag value and assigns it to the addr
 	// ortherwise it will always contain the default value of ":4000". if any errors are will be terminated.
 	flag.Parse()
+
+	// Use the slog.New() funciton to initialize a new structured logger, which
+	// writes to the standard out stream and usese the default settings.
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+		// AddSource: true,
+	}))
 
 	// use the http.NewServeMux() function to initialize a new servemux, then
 	// register the home function as the handler for the "/" URL pattern.
@@ -29,16 +44,22 @@ func main() {
 	// "/static" prefix before the request reaches the file server.
 	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
 
+	// Initialize a new instance of our applicaton struct, containing the
+	// dependencies (for now, just the structured logger).
+	app := &application{logger: logger}
+
 	// Register the other routes as normal...
 	// The "{$}" prevents trailing slash URLs from becoming "catch it all"
-	mux.HandleFunc("GET /{$}", home)
-	mux.HandleFunc("GET /snippet/view/{id}", snipppetView) // Add the {id} wildcard segment
-	mux.HandleFunc("GET /snippet/create", snipppetCreate)
+	mux.HandleFunc("GET /{$}", app.home)
+	mux.HandleFunc("GET /snippet/view/{id}", app.snipppetView) // Add the {id} wildcard segment
+	mux.HandleFunc("GET /snippet/create", app.snipppetCreate)
 	// Create the new route, which is restricted to POST requests only.
-	mux.HandleFunc("POST /snippet/create", snippetCreatePost)
+	mux.HandleFunc("POST /snippet/create", app.snippetCreatePost)
 
 	// Print a log message to say that the server is starting.
-	log.Printf("staging server on %s", *addr)
+	// Uset the Infor() method to log the starting server mesaage at Info severity
+	// (along with the listen address as an atribute).
+	logger.Info("starting server", slog.Any("add", *addr))
 
 	// use the http.ListerAndServe() function to start a new web server.
 	// we pass in two parameters:
@@ -48,5 +69,9 @@ func main() {
 	// function to log the error message and exit. Note that any error returned by
 	// http.ListenAndServe() is always non-nil.
 	err := http.ListenAndServe(*addr, mux) // We pass the dereferenced addr pointer to the ListenAndServer too.
-	log.Fatal(err)
+	// And we also use the Error() method to log any error message rturnd by
+	// http.ListenAndServe() at Error severity (with no additional attributes),
+	// and then call os.Exit(1) to terminate the application with exit code 1.
+	logger.Error(err.Error())
+	os.Exit(1)
 }

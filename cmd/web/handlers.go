@@ -3,13 +3,13 @@ package main
 import (
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"strconv"
 )
 
 // Define a home handler funciton which writes a byte slice containing "hello from Snippetbox" as the response body.
-func home(w http.ResponseWriter, r *http.Request) {
+// Change the signature of the home handler so it is defined as method against *application.
+func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	// User the Header().Add() method to add a "Server: Go" header to the
 	// response header map. Thr first paramter is the header name, and
 	// the second parameter is the header value.
@@ -19,7 +19,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 	// to note taht the file containing our base template must be the FIRST
 	files := []string{
 		"./ui/html/base.tmpl",
-		"./ui/html/pages/home.tmpl",
+		"./ui/html/pages/hom.tmpl",
 		"./ui/html/partials/nav.tmpl", // Include the navigation partial in the template files.
 	}
 
@@ -33,8 +33,14 @@ func home(w http.ResponseWriter, r *http.Request) {
 	// of the files slice as variadic arguments.
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		log.Print(err.Error())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		// Because the home handler isnow a method agaist the application
+		// struct it can access its fields, including the structured logger. We'll
+		// use this to create a log entry at Error level cotaining the error
+		// message, also including the request method and URI as attributes to
+		// assist with debugging.
+		// // app.logger.Error(err.Error(), "method", r.Method, "uri", r.URL.RequestURI())
+		// // http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		app.serverError(w, r, err) // Refactor previous code with serverError helper method.
 		return
 	}
 
@@ -47,15 +53,19 @@ func home(w http.ResponseWriter, r *http.Request) {
 	// template as the reponse body.
 	err = ts.ExecuteTemplate(w, "base", nil)
 	if err != nil {
-		log.Print(err.Error())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		// And we also need to update the code here to use the structured logger too.
+		// // app.logger.Error(err.Error(), "method", r.Method, "uri", r.URL.RequestURI())
+		// // http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		app.serverError(w, r, err) // Refactor previous code with serverError helper method.
 	}
 
 	// w.Write([]byte("hello from Snippetbox"))
 }
 
 // Add a snippetView handler function.
-func snipppetView(w http.ResponseWriter, r *http.Request) {
+// Change the signature of the snippetView handler so it is defined as a method
+// against *application
+func (app *application) snipppetView(w http.ResponseWriter, r *http.Request) {
 	// Extract the value of the id wildcard from the request using r.PathValue()
 	// it can't be converted to an integer, or the value is less thatn 1, we
 	// return a 404 page not found reponse
@@ -71,12 +81,12 @@ func snipppetView(w http.ResponseWriter, r *http.Request) {
 }
 
 // Add a snippetCreate handler function.
-func snipppetCreate(w http.ResponseWriter, r *http.Request) {
+func (app *application) snipppetCreate(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Display a form for creating a new snippet..."))
 }
 
 // Add a snippetCreatePost handler function.
-func snippetCreatePost(w http.ResponseWriter, r *http.Request) {
+func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
 	// Use the w.WriteHeader() method to send a 201 status code.
 	w.WriteHeader(http.StatusCreated)
 
