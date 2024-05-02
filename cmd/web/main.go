@@ -8,13 +8,18 @@ import (
 	"os"
 
 	_ "github.com/lib/pq"
+	// Import the models package that we just creates.
+	"github.com/raiesbo/snippetbox/internals/models"
 )
 
 // Define an applicaton structu to hold the application-wide dependencies for the
 // web application. For now we'll only include the structured looger , but we'll
 // add more to this as the build progresses.
+// Add a snippets field to the application struct. This will allow us to
+// make the SnippetModel object available to our handlers.
 type application struct {
-	logger *slog.Logger
+	logger   *slog.Logger
+	snippets *models.SnippetModel
 }
 
 func main() {
@@ -52,7 +57,12 @@ func main() {
 
 	// Initialize a new instance of our applicaton struct, containing the
 	// dependencies (for now, just the structured logger).
-	app := &application{logger: logger}
+	// Initialize a models.SnippetModel instance cotaining the connection pool
+	// and add it to the application dependencies.
+	app := &application{
+		logger:   logger,
+		snippets: &models.SnippetModel{DB: db},
+	}
 
 	// Print a log message to say that the server is starting.
 	// Uset the Infor() method to log the starting server mesaage at Info severity
