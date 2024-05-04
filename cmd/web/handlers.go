@@ -75,9 +75,15 @@ func (app *application) snipppetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	snippet, err := app.snippets.Get(id)
+	if err != nil || id < 1 {
+		http.NotFound(w, r)
+		return
+	}
+
 	// Use the fmt.Sprintf() function to interpolate the id value with a message,
 	// then write it as the HTTP response.
-	fmt.Fprintf(w, "Display a specific snippet with ID %d...", id) // Fprintf write the formatted string to "w" ResponseWritter.
+	fmt.Fprintf(w, "Display a specific snippet with ID %d, %s...", id, snippet.Title) // Fprintf write the formatted string to "w" ResponseWritter.
 }
 
 // Add a snippetCreate handler function.
