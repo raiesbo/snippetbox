@@ -87,8 +87,23 @@ func (app *application) snipppetCreate(w http.ResponseWriter, r *http.Request) {
 
 // Add a snippetCreatePost handler function.
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
-	// Use the w.WriteHeader() method to send a 201 status code.
-	w.WriteHeader(http.StatusCreated)
+	// Create some variables holding dummy data. We'll remove these later on
+	// during the build.
+	title := "0 snail"
+	content := "0 snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n- Kobayashi Issa"
+	// expires := 7
 
-	w.Write([]byte("Save a new snippet..."))
+	// Pass the data to the SnippetModdel.Insert() method, receiving the
+	// ID of the new record back.
+	id, err := app.snippets.Insert(title, content)
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// Use the w.WriteHeader() method to send a 201 status code.
+	// w.WriteHeader(http.StatusCreated)
+
+	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
+	// w.Write([]byte("Save a new snippet..."))
 }
