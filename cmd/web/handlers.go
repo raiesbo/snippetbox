@@ -1,10 +1,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
 	"strconv"
+
+	"github.com/raiesbo/snippetbox/internal/models"
 )
 
 // Define a home handler funciton which writes a byte slice containing "hello from Snippetbox" as the response body.
@@ -75,15 +78,25 @@ func (app *application) snipppetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	//Use the SnippetModel's Get() method to retrieve the data for a
+	// specific record based on its ID. If no matching record is found,
+	// return a 404 Not Found response
 	snippet, err := app.snippets.Get(id)
-	if err != nil || id < 1 {
-		http.NotFound(w, r)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			http.NotFound(w, r)
+		} else {
+			app.serverError(w, r, err)
+		}
 		return
 	}
 
+	// Write the snippet data as a plain text HTTP response body.
+	fmt.Fprintf(w, "%+v", snippet)
+
 	// Use the fmt.Sprintf() function to interpolate the id value with a message,
 	// then write it as the HTTP response.
-	fmt.Fprintf(w, "Display a specific snippet with ID %d, %s...", id, snippet.Title) // Fprintf write the formatted string to "w" ResponseWritter.
+	// fmt.Fprintf(w, "Display a specific snippet with ID %d, %s...", id, snippet.Title) // Fprintf write the formatted string to "w" ResponseWritter.
 }
 
 // Add a snippetCreate handler function.

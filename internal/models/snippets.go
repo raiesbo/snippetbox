@@ -52,6 +52,9 @@ func (m *SnippetModel) Insert(title string, content string) (int, error) {
 
 // This will return a specific snippet based on its id.
 func (m *SnippetModel) Get(id int) (Snippet, error) {
+	// Initialize a new zeroed Snippet struct.
+	var s Snippet
+
 	// Write the SQL statement we want to execute.
 	// stmt := `SELECT id, title, content, created, expires FROM snippets
 	// WHERE expire > UTC_TIMESTAMP() AND id = $1`
@@ -62,20 +65,15 @@ func (m *SnippetModel) Get(id int) (Snippet, error) {
 	// SQL statement, passing in the untrusted id variable as the value for the
 	// placeholder paramter. This returns a pointer to a sql.Row object which
 	// holds the result from the database.
-	row := m.DB.QueryRow(stmt, id)
-
-	// Initialize a new zeroed Snippet struct.
-	var s Snippet
-
 	// use row.Scan() to copy the values from each field in sql.Row to the
 	// corresponding field in the Snippet strucut.
-	err := row.Scan(&s.ID, &s.Title, &s.Content, &s.Created, &s.Expires)
+	err := m.DB.QueryRow(stmt, id).Scan(&s.ID, &s.Title, &s.Content, &s.Created, &s.Expires)
 	if err != nil {
 		// if the query retusn no ros, then row.Scan() will return a
 		// sql.ErrNoRows erro. We use the errors.Is() function check for that
 		// error specifically, and return our own ErrNorRecords error instead
 		if errors.Is(err, sql.ErrNoRows) {
-			return Snippet{}, sql.ErrNoRows
+			return Snippet{}, ErrNoRecord
 		} else {
 			return Snippet{}, err
 		}

@@ -9,7 +9,7 @@ import (
 
 	_ "github.com/lib/pq"
 	// Import the models package that we just creates.
-	"github.com/raiesbo/snippetbox/internals/models"
+	"github.com/raiesbo/snippetbox/internal/models"
 )
 
 // Define an applicaton structu to hold the application-wide dependencies for the
