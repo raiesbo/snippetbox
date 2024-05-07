@@ -119,11 +119,11 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 	// during the build.
 	title := "0 snail"
 	content := "0 snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n- Kobayashi Issa"
-	// expires := 7
+	expires := 7
 
 	// Pass the data to the SnippetModdel.Insert() method, receiving the
 	// ID of the new record back.
-	id, err := app.snippets.Insert(title, content)
+	id, err := app.snippets.Insert(title, content, expires)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
