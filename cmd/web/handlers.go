@@ -116,8 +116,13 @@ func (app *application) snipppetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Create an instance of a templateData struct holding the snippet data.
+	data := templateData{
+		Snippet: snippet,
+	}
+
 	// And then execute them.
-	err = ts.ExecuteTemplate(w, "base", snippet)
+	err = ts.ExecuteTemplate(w, "base", data)
 	if err != nil {
 		app.serverError(w, r, err)
 	}
