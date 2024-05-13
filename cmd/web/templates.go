@@ -7,5 +7,6 @@ import "github.com/raiesbo/snippetbox/internal/models"
 // At th emoment it only contains one field, but we'll add more
 // to it as the build progresses.
 type templateData struct {
-	Snippet models.Snippet
+	Snippet  models.Snippet
+	Snippets []models.Snippet
 }
