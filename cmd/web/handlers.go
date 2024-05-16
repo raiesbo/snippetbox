@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/raiesbo/snippetbox/internal/models"
 )
@@ -23,10 +24,11 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	data := app.newTemplateCache(r)
+	data.Snippets = snippets
+
 	// use the new render helper.
-	app.render(w, r, http.StatusOK, "home.tmpl", templateData{
-		Snippets: snippets,
-	})
+	app.render(w, r, http.StatusOK, "home.tmpl", data)
 
 	// for _, snippet := range snippets {
 	// 	fmt.Fprintf(w, "%+v\n", snippet)
@@ -109,10 +111,11 @@ func (app *application) snipppetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	data := app.newTemplateCache(r)
+	data.Snippet = snippet
+
 	// use the new render helper.
-	app.render(w, r, http.StatusOK, "view.tmpl", templateData{
-		Snippet: snippet,
-	})
+	app.render(w, r, http.StatusOK, "view.tmpl", data)
 
 	// Initialize a slice containing the paths to the view.tmpl file,
 	// plus the base layout and navigation partial that we made earlier
@@ -171,4 +174,10 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 
 	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
 	// w.Write([]byte("Save a new snippet..."))
+}
+
+func (a *application) newTemplateCache(r *http.Request) templateData {
+	return templateData{
+		CurrentYear: time.Now().Year(),
+	}
 }
