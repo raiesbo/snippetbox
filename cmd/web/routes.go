@@ -3,7 +3,7 @@ package main
 import "net/http"
 
 // The routes9) method returns a servemux containing our application routes.
-func (app *application) routes() *http.ServeMux {
+func (app *application) routes() http.Handler {
 	// use the http.NewServeMux() function to initialize a new servemux, then
 	// register the home function as the handler for the "/" URL pattern.
 	mux := http.NewServeMux()
@@ -25,5 +25,8 @@ func (app *application) routes() *http.ServeMux {
 	// Create the new route, which is restricted to POST requests only.
 	mux.HandleFunc("POST /snippet/create", app.snippetCreatePost)
 
-	return mux
+	// Pas the servemux as the 'next' parameter to the commonHeaders middleware.routes
+	// Because commonHeader is just a function, and the function returns a
+	// http.Handler we don't need to do anything else.'
+	return commonHeaders(mux)
 }

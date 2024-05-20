@@ -13,11 +13,6 @@ import (
 // Define a home handler funciton which writes a byte slice containing "hello from Snippetbox" as the response body.
 // Change the signature of the home handler so it is defined as method against *application.
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
-	// User the Header().Add() method to add a "Server: Go" header to the
-	// response header map. Thr first paramter is the header name, and
-	// the second parameter is the header value.
-	w.Header().Add("Server", "Go")
-
 	snippets, err := app.snippets.Lastest()
 	if err != nil {
 		app.serverError(w, r, err)
