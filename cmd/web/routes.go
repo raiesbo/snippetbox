@@ -28,5 +28,5 @@ func (app *application) routes() http.Handler {
 	// Pas the servemux as the 'next' parameter to the commonHeaders middleware.routes
 	// Because commonHeader is just a function, and the function returns a
 	// http.Handler we don't need to do anything else.'
-	return commonHeaders(mux)
+	return app.logRequest(commonHeaders(mux))
 }
