@@ -152,11 +152,31 @@ func (app *application) snipppetCreate(w http.ResponseWriter, r *http.Request) {
 
 // Add a snippetCreatePost handler function.
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
-	// Create some variables holding dummy data. We'll remove these later on
-	// during the build.
-	title := "0 snail"
-	content := "Climb Mount Fuji,\nBut slowly, slowly!\n\n- Kobayashi Issa"
-	expires := 7
+	// First we call the r.ParseForm() which adds any data in POST request bodies
+	// to the r.PostForm map. This also works in the same wa for PUT and PATCH
+	// requests. If there are any errors,  we use our app.ClientError() helper to
+	// send a 400 Bad request response to the user.
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, r, http.StatusBadRequest)
+		return
+	}
+
+	// Use the r.PostForm.Get() method to retrieve the title and content
+	// from the r.PostForm map.
+	title := r.PostForm.Get("title")
+	content := r.PostForm.Get("content")
+
+	// The r.PostForm.Get() method always returns the form data as a *string*.
+	// However, we're expecting our expires value to be a number, and wan to
+	// represent it in our Go code as an integer. So we need to manualy convert
+	// the form data to an integer using strconv.Atoi(), and we send 400 Bad
+	// Request respones if the conversion fails.
+	expires, err := strconv.Atoi(r.PostForm.Get("expires"))
+	if err != nil {
+		app.clientError(w, r, http.StatusBadRequest)
+		return
+	}
 
 	// Pass the data to the SnippetModdel.Insert() method, receiving the
 	// ID of the new record back.
