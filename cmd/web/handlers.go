@@ -12,6 +12,18 @@ import (
 	"github.com/raiesbo/snippetbox/internal/models"
 )
 
+// Define a snippetCreatForm struct to represent the form adata and validation
+// errors for the form fields. Note that all the struct fields are deliberately
+// exported (i.e. start with a capital letter). This is because structu fields
+// must be exported in order to be read by the html/template package when
+// rendering the template.
+type snippetCreateForm struct {
+	Title       string
+	Content     string
+	Expires     int
+	FieldErrors map[string]string
+}
+
 // Define a home handler funciton which writes a byte slice containing "hello from Snippetbox" as the response body.
 // Change the signature of the home handler so it is defined as method against *application.
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -166,8 +178,8 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 
 	// Use the r.PostForm.Get() method to retrieve the title and content
 	// from the r.PostForm map.
-	title := r.PostForm.Get("title")
-	content := r.PostForm.Get("content")
+	// title := r.PostForm.Get("title")
+	// content := r.PostForm.Get("content")
 
 	// The r.PostForm.Get() method always returns the form data as a *string*.
 	// However, we're expecting our expires value to be a number, and wan to
@@ -180,40 +192,51 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Create a instance of the snippetCreateForm struct containing the values
+	// from the form and an empty map for any validation errors.
+	form := snippetCreateForm{
+		Title:       r.PostForm.Get("title"),
+		Content:     r.PostForm.Get("content"),
+		Expires:     expires,
+		FieldErrors: map[string]string{},
+	}
+
 	// Initialize a map to hold any validation  errors for the form fields.
-	fieldErrors := make(map[string]string)
+	// fieldErrors := make(map[string]string)
 
 	// Check taht the title value is not black and is not more than 100
 	// charatcters long. If it fails either of those check, ass a message to the
 	// errors map using the fiel name as the key.
-	if strings.TrimSpace(title) == "" {
-		fieldErrors["title"] = "This fields cannot be black"
-	} else if utf8.RuneCountInString(title) > 100 {
-		fieldErrors["title"] = "This field cannot be more than 100 characters long"
+	if strings.TrimSpace(form.Title) == "" {
+		form.FieldErrors["title"] = "This fields cannot be black"
+	} else if utf8.RuneCountInString(form.Title) > 100 {
+		form.FieldErrors["title"] = "This field cannot be more than 100 characters long"
 	}
 
 	// Check that the Content value isn't black.
-	if strings.TrimSpace(content) == "" {
-		fieldErrors["content"] = "This field cannot be blank"
+	if strings.TrimSpace(form.Content) == "" {
+		form.FieldErrors["content"] = "This field cannot be blank"
 	}
 
 	// Check the expires value matches one of the permitted values (1, 7, 365).
 	if expires != 1 && expires != 7 && expires != 365 {
-		fieldErrors["expires"] = "This field must equal 1, 7, 365"
+		form.FieldErrors["expires"] = "This field must equal 1, 7, 365"
 	}
 
-	fmt.Println(fieldErrors)
-
-	// If there are any errors, dump them in a plain HTTP respose and
-	// return from the handler.
-	if len(fieldErrors) > 0 {
-		fmt.Fprint(w, fieldErrors)
+	// If there are any validation errors, then redisplay the craete.tmpl template,
+	// passing in the snippetCreateForm instance as dynamic data in the Form
+	// field. Note that we use the HTTP status code 422 Unprocessable Entity
+	// when sendin the response to indicate that tehre was a validation error.
+	if len(form.FieldErrors) > 0 {
+		data := app.newTemplateCache(r)
+		data.Form = form
+		app.render(w, r, http.StatusUnprocessableEntity, "create.tmpl", data)
 		return
 	}
 
 	// Pass the data to the SnippetModdel.Insert() method, receiving the
 	// ID of the new record back.
-	id, err := app.snippets.Insert(title, content, expires)
+	id, err := app.snippets.Insert(form.Title, form.Content, form.Expires)
 	if err != nil {
 		app.serverError(w, r, err)
 		return
