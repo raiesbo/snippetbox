@@ -105,24 +105,30 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 	// to the r.PostForm map. This also works in the same wa for PUT and PATCH
 	// requests. If there are any errors,  we use our app.ClientError() helper to
 	// send a 400 Bad request response to the user.
-	err := r.ParseForm()
+	// err := r.ParseForm()
+	// if err != nil {
+	// 	app.clientError(w, r, http.StatusBadRequest)
+	// 	return
+	// }
+
+	// Declare a new emtpy instance of the snippet CreateForm struct.
+	var form snippetCreateForm
+
+	err := app.decodePostForm(r, &form)
 	if err != nil {
 		app.clientError(w, r, http.StatusBadRequest)
 		return
 	}
-
-	// Declare a new emtpy instance of the snippet CreateForm struct.
-	var form snippetCreateForm
 
 	// Call the Decode() method of the form decoder, passing in the current
 	// request and *a pointer* to our snippetCreateForm struct. This will
 	// exxentially fill our struct with the relevant values from the HTML form.
 	// If there is a problem, we return a 400 Bad Request response to the client.
-	err = app.formDecoder.Decode(&form, r.PostForm)
-	if err != nil {
-		app.clientError(w, r, http.StatusBadRequest)
-		return
-	}
+	// err = app.formDecoder.Decode(&form, r.PostForm)
+	// if err != nil {
+	// 	app.clientError(w, r, http.StatusBadRequest)
+	// 	return
+	// }
 
 	// Then validate an duse the data as normal...
 
