@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/go-playground/form/v4"
 	_ "github.com/lib/pq"
-	// Import the models package that we just creates.
 	"github.com/raiesbo/snippetbox/internal/models"
 )
 
@@ -22,6 +22,7 @@ type application struct {
 	logger        *slog.Logger
 	snippets      *models.SnippetModel
 	templateCache map[string]*template.Template
+	formDecoder   *form.Decoder
 }
 
 func main() {
@@ -59,6 +60,13 @@ func main() {
 
 	// Initialize a new template cache...
 	templateCache, err := newTemplateCache()
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+
+	// Initialize a decoder instance
+	formDecoder := form.NewDecoder()
 
 	// Initialize a new instance of our applicaton struct, containing the
 	// dependencies (for now, just the structured logger).
@@ -68,6 +76,7 @@ func main() {
 		logger:        logger,
 		snippets:      &models.SnippetModel{DB: db},
 		templateCache: templateCache,
+		formDecoder:   formDecoder,
 	}
 
 	// Print a log message to say that the server is starting.

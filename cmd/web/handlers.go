@@ -11,17 +11,29 @@ import (
 	"github.com/raiesbo/snippetbox/internal/validatior"
 )
 
+// Update our snippetCreateFomr struct to include struct tags which tell the
+// decoder how to map HTML form values into the differen tstruct fields. So, for
+// example, here we'are telling the decoder to store the value from th HTML form
+// input with the name "title" in th eTitle field. The struct tag `form:"-"`
+// tells the decoder to completely ingnore a field during decoding.
+type snippetCreateForm struct {
+	Title                string `form:"title"`
+	Content              string `form:"content"`
+	Expires              int    `form:"expires"`
+	validatior.Validator `form:"_"`
+}
+
 // Define a snippetCreatForm struct to represent the form adata and validation
 // errors for the form fields. Note that all the struct fields are deliberately
 // exported (i.e. start with a capital letter). This is because structu fields
 // must be exported in order to be read by the html/template package when
 // rendering the template.
-type snippetCreateForm struct {
-	Title   string
-	Content string
-	Expires int
-	validatior.Validator
-}
+// type snippetCreateForm struct {
+// 	Title   string
+// 	Content string
+// 	Expires int
+// 	validatior.Validator
+// }
 
 // Define a home handler funciton which writes a byte slice containing "hello from Snippetbox" as the response body.
 // Change the signature of the home handler so it is defined as method against *application.
@@ -37,60 +49,6 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 	// use the new render helper.
 	app.render(w, r, http.StatusOK, "home.tmpl", data)
-
-	// for _, snippet := range snippets {
-	// 	fmt.Fprintf(w, "%+v\n", snippet)
-	// }
-
-	// Initialize a slice contaiing the paths to the two files. It's important
-	// to note taht the file containing our base template must be the FIRST
-	// files := []string{
-	// 	"./ui/html/base.tmpl",
-	// 	"./ui/html/pages/home.tmpl",
-	// 	"./ui/html/partials/nav.tmpl", // Include the navigation partial in the template files.
-	// }
-
-	// Use the template.ParseFiles() function to read the template file into a
-	// template set. If there's an error, we log the detailed error message, use
-	// The http.Error() fucntio to send an  Internal Server Error response to the
-	// user, and then return from the handler so no subsequent code is executed.
-
-	// Use the template.ParseFiles() function to read the files and store the
-	// templates in a tesmplate set. Notice that we use ... to pass the contents
-	// of the files slice as variadic arguments.
-	// ts, err := template.ParseFiles(files...)
-	// if err != nil {
-	// 	// Because the home handler isnow a method agaist the application
-	// 	// struct it can access its fields, including the structured logger. We'll
-	// 	// use this to create a log entry at Error level cotaining the error
-	// 	// message, also including the request method and URI as attributes to
-	// 	// assist with debugging.
-	// 	// // app.logger.Error(err.Error(), "method", r.Method, "uri", r.URL.RequestURI())
-	// 	// // http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	// 	app.serverError(w, r, err) // Refactor previous code with serverError helper method.
-	// 	return
-	// }
-
-	// data := templateData{
-	// 	Snippets: snippets,
-	// }
-
-	// Then we use the Execute() method on the template set to write the
-	// template content as the response body. The last parameter to Execute()
-	// represents any dynamic data that we want to pass in, which for now we'll
-	// leave as nil.
-
-	// Uset the ExecuteTemplate() method to write the content of the "base"
-	// template as the reponse body.
-	// err = ts.ExecuteTemplate(w, "base", data)
-	// if err != nil {
-	// 	// And we also need to update the code here to use the structured logger too.
-	// 	// // app.logger.Error(err.Error(), "method", r.Method, "uri", r.URL.RequestURI())
-	// 	// // http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	// 	app.serverError(w, r, err) // Refactor previous code with serverError helper method.
-	// }
-
-	// w.Write([]byte("hello from Snippetbox"))
 }
 
 // Add a snippetView handler function.
@@ -124,36 +82,6 @@ func (app *application) snipppetView(w http.ResponseWriter, r *http.Request) {
 
 	// use the new render helper.
 	app.render(w, r, http.StatusOK, "view.tmpl", data)
-
-	// Initialize a slice containing the paths to the view.tmpl file,
-	// plus the base layout and navigation partial that we made earlier
-	// files := []string{
-	// 	"./ui/html/base.tmpl",
-	// 	"./ui/html/partials/nav.tmpl",
-	// 	"./ui/html/pages/view.tmpl",
-	// }
-
-	// Parse the templates files...
-	// ts, err := template.ParseFiles(files...)
-	// if err != nil {
-	// 	app.serverError(w, r, err)
-	// 	return
-	// }
-
-	// Create an instance of a templateData struct holding the snippet data.
-	// data := templateData{
-	// 	Snippet: snippet,
-	// }
-
-	// And then execute them.
-	// err = ts.ExecuteTemplate(w, "base", data)
-	// if err != nil {
-	// 	app.serverError(w, r, err)
-	// }
-
-	// Use the fmt.Sprintf() function to interpolate the id value with a message,
-	// then write it as the HTTP response.
-	// fmt.Fprintf(w, "Display a specific snippet with ID %d, %s...", id, snippet.Title) // Fprintf write the formatted string to "w" ResponseWritter.
 }
 
 // Add a snippetCreate handler function.
@@ -183,6 +111,21 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Declare a new emtpy instance of the snippet CreateForm struct.
+	var form snippetCreateForm
+
+	// Call the Decode() method of the form decoder, passing in the current
+	// request and *a pointer* to our snippetCreateForm struct. This will
+	// exxentially fill our struct with the relevant values from the HTML form.
+	// If there is a problem, we return a 400 Bad Request response to the client.
+	err = app.formDecoder.Decode(&form, r.PostForm)
+	if err != nil {
+		app.clientError(w, r, http.StatusBadRequest)
+		return
+	}
+
+	// Then validate an duse the data as normal...
+
 	// Use the r.PostForm.Get() method to retrieve the title and content
 	// from the r.PostForm map.
 	// title := r.PostForm.Get("title")
@@ -193,19 +136,19 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 	// represent it in our Go code as an integer. So we need to manualy convert
 	// the form data to an integer using strconv.Atoi(), and we send 400 Bad
 	// Request respones if the conversion fails.
-	expires, err := strconv.Atoi(r.PostForm.Get("expires"))
-	if err != nil {
-		app.clientError(w, r, http.StatusBadRequest)
-		return
-	}
+	// expires, err := strconv.Atoi(r.PostForm.Get("expires"))
+	// if err != nil {
+	// 	app.clientError(w, r, http.StatusBadRequest)
+	// 	return
+	// }
 
 	// Create a instance of the snippetCreateForm struct containing the values
 	// from the form and an empty map for any validation errors.
-	form := snippetCreateForm{
-		Title:   r.PostForm.Get("title"),
-		Content: r.PostForm.Get("content"),
-		Expires: expires,
-	}
+	// form := snippetCreateForm{
+	// 	Title:   r.PostForm.Get("title"),
+	// 	Content: r.PostForm.Get("content"),
+	// 	Expires: expires,
+	// }
 
 	// Because the Validator struct is embeded by the snippetCreateForm struct,
 	// we ca nall CehckField() directly on it to execute our validation checks.
