@@ -21,13 +21,27 @@ func (app *application) routes() http.Handler {
 	// "/static" prefix before the request reaches the file server.
 	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
 
+	// Create a new middleware chain containingh the middleware specific to our
+	// dynamic application routes. For now, this chain will only contain the
+	// LoadAndSave session middleware but we'll add more to it later.
+	dynamic := alice.New(app.sessionManager.LoadAndSave)
+
+	// Update these routess to use the new dynamic middleware cahain followed by
+	// the appropriate handler funciton. Note that because the alice ThenFunc()
+	// method returns a http.Handler (rather than a http.HandlerFunc) we also
+	// need to switc to registering the route using the mux.Handle() method.
+	mux.Handle("GET /{$}", dynamic.ThenFunc(app.home))
+	mux.Handle("GET /snippet/view/{id}", dynamic.ThenFunc(app.snipppetView))
+	mux.Handle("GET /snippet/create", dynamic.ThenFunc(app.snipppetCreate))
+	mux.Handle("POST /snippet/create", dynamic.ThenFunc(app.snippetCreatePost))
+
 	// Register the other routes as normal...
 	// The "{$}" prevents trailing slash URLs from becoming "catch it all"
-	mux.HandleFunc("GET /{$}", app.home)
-	mux.HandleFunc("GET /snippet/view/{id}", app.snipppetView) // Add the {id} wildcard segment
-	mux.HandleFunc("GET /snippet/create", app.snipppetCreate)
-	// Create the new route, which is restricted to POST requests only.
-	mux.HandleFunc("POST /snippet/create", app.snippetCreatePost)
+	// mux.HandleFunc("GET /{$}", app.home)
+	// mux.HandleFunc("GET /snippet/view/{id}", app.snipppetView) // Add the {id} wildcard segment
+	// mux.HandleFunc("GET /snippet/create", app.snipppetCreate)
+	// // Create the new route, which is restricted to POST requests only.
+	// mux.HandleFunc("POST /snippet/create", app.snippetCreatePost)
 
 	// Pas the servemux as the 'next' parameter to the commonHeaders middleware.routes
 	// Because commonHeader is just a function, and the function returns a
