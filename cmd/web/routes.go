@@ -35,14 +35,6 @@ func (app *application) routes() http.Handler {
 	mux.Handle("GET /snippet/create", dynamic.ThenFunc(app.snipppetCreate))
 	mux.Handle("POST /snippet/create", dynamic.ThenFunc(app.snippetCreatePost))
 
-	// Register the other routes as normal...
-	// The "{$}" prevents trailing slash URLs from becoming "catch it all"
-	// mux.HandleFunc("GET /{$}", app.home)
-	// mux.HandleFunc("GET /snippet/view/{id}", app.snipppetView) // Add the {id} wildcard segment
-	// mux.HandleFunc("GET /snippet/create", app.snipppetCreate)
-	// // Create the new route, which is restricted to POST requests only.
-	// mux.HandleFunc("POST /snippet/create", app.snippetCreatePost)
-
 	// Pas the servemux as the 'next' parameter to the commonHeaders middleware.routes
 	// Because commonHeader is just a function, and the function returns a
 	// http.Handler we don't need to do anything else.'
