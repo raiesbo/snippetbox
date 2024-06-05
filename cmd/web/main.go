@@ -94,24 +94,24 @@ func main() {
 		sessionManager: sessionManager,
 	}
 
+	// Initialize a new http.Server struc. We set the Addr and Handler fields so
+	// that the server uses the same network address and routes as before
+	srv := &http.Server{
+		Addr:    *addr,
+		Handler: app.routes(),
+		// Create a *log.Logger from our structured logger handler, which writes
+		// log entries at Error level, and assign it to the ErrorLog field.
+		ErrorLog: slog.NewLogLogger(logger.Handler(), slog.LevelWarn),
+	}
+
 	// Print a log message to say that the server is starting.
 	// Uset the Infor() method to log the starting server mesaage at Info severity
 	// (along with the listen address as an atribute).
 	logger.Info("starting server", slog.Any("add", *addr))
 
-	// use the http.ListerAndServe() function to start a new web server.
-	// we pass in two parameters:
-	// - the TCP network address to listen on (in this case ":4000")
-	// - the servemux we just created
-	// If http.ListenAndServe() returns an error we use the log.Fatal()
-	// function to log the error message and exit. Note that any error returned by
-	// http.ListenAndServe() is always non-nil.
-	// Call the enw app.routes() method to get the servemux containing our routes,
-	// and pass that to http.ListenAndServe().
-	err = http.ListenAndServe(*addr, app.routes()) // We pass the dereferenced addr pointer to the ListenAndServer too.
-	// And we also use the Error() method to log any error message rturnd by
-	// http.ListenAndServe() at Error severity (with no additional attributes),
-	// and then call os.Exit(1) to terminate the application with exit code 1.
+	// Call the ListenAndServe() method on our new http.Server strcut to start
+	// the server
+	err = srv.ListenAndServe()
 	logger.Error(err.Error())
 	os.Exit(1)
 }
