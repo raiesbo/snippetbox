@@ -79,6 +79,11 @@ func main() {
 	sessionManager := scs.New()
 	sessionManager.Store = postgresstore.New(db)
 	sessionManager.Lifetime = 12 * time.Hour
+	// Make sure that the Secure attribute is set on our session cookies.
+	// Settings this means that the cookie will only be setn by a user's web
+	// browser when the HTTPS connection is being used (and won't be sent over an
+	// unsecure HTTP connection).
+	sessionManager.Cookie.Secure = true
 
 	// And add the session manage to our application dependencies.
 
@@ -111,7 +116,7 @@ func main() {
 
 	// Call the ListenAndServe() method on our new http.Server strcut to start
 	// the server
-	err = srv.ListenAndServe()
+	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	logger.Error(err.Error())
 	os.Exit(1)
 }
