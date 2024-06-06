@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"flag"
 	"html/template"
@@ -99,6 +100,14 @@ func main() {
 		sessionManager: sessionManager,
 	}
 
+	// Initialize a tls.Config struct to hold the non-default TLS setting swe
+	// want the server to use. In this case the only thing that we're changing
+	// is the curve preferences value, so that on ly elliptic curves with
+	// assembly implementations are used.
+	tlsConfig := &tls.Config{
+		CurvePreferences: []tls.CurveID{tls.X25519, tls.CurveP256},
+	}
+
 	// Initialize a new http.Server struc. We set the Addr and Handler fields so
 	// that the server uses the same network address and routes as before
 	srv := &http.Server{
@@ -106,7 +115,8 @@ func main() {
 		Handler: app.routes(),
 		// Create a *log.Logger from our structured logger handler, which writes
 		// log entries at Error level, and assign it to the ErrorLog field.
-		ErrorLog: slog.NewLogLogger(logger.Handler(), slog.LevelWarn),
+		ErrorLog:  slog.NewLogLogger(logger.Handler(), slog.LevelWarn),
+		TLSConfig: tlsConfig,
 	}
 
 	// Print a log message to say that the server is starting.
