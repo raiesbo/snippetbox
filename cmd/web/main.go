@@ -117,6 +117,10 @@ func main() {
 		// log entries at Error level, and assign it to the ErrorLog field.
 		ErrorLog:  slog.NewLogLogger(logger.Handler(), slog.LevelWarn),
 		TLSConfig: tlsConfig,
+		// Add Idle, Read and Write timeouts to the server
+		IdleTimeout:  time.Minute,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 
 	// Print a log message to say that the server is starting.
