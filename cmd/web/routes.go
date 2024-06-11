@@ -35,6 +35,13 @@ func (app *application) routes() http.Handler {
 	mux.Handle("GET /snippet/create", dynamic.ThenFunc(app.snipppetCreate))
 	mux.Handle("POST /snippet/create", dynamic.ThenFunc(app.snippetCreatePost))
 
+	// Add the five new routes, all of which use our 'dynamic' middleware chain
+	mux.Handle("GET /user/signup", dynamic.ThenFunc(app.userSignup))
+	mux.Handle("POST /user/signup", dynamic.ThenFunc(app.userSignupPost))
+	mux.Handle("GET /user/login", dynamic.ThenFunc(app.userLogin))
+	mux.Handle("POST /user/login", dynamic.ThenFunc(app.userLoginPost))
+	mux.Handle("POST /user/logout", dynamic.ThenFunc(app.userLogoutPost))
+
 	// Pas the servemux as the 'next' parameter to the commonHeaders middleware.routes
 	// Because commonHeader is just a function, and the function returns a
 	// http.Handler we don't need to do anything else.'
