@@ -25,6 +25,7 @@ import (
 type application struct {
 	logger         *slog.Logger
 	snippets       *models.SnippetModel
+	users          *models.UserModel
 	templateCache  map[string]*template.Template
 	formDecoder    *form.Decoder
 	sessionManager *scs.SessionManager
@@ -95,6 +96,7 @@ func main() {
 	app := &application{
 		logger:         logger,
 		snippets:       &models.SnippetModel{DB: db},
+		users:          &models.UserModel{DB: db},
 		templateCache:  templateCache,
 		formDecoder:    formDecoder,
 		sessionManager: sessionManager,
@@ -113,6 +115,11 @@ func main() {
 	srv := &http.Server{
 		Addr:    *addr,
 		Handler: app.routes(),
+
+		// Limit the max header length to 0.5mb. Go add an additional 4096 bytes
+		// by default
+		MaxHeaderBytes: 524288,
+
 		// Create a *log.Logger from our structured logger handler, which writes
 		// log entries at Error level, and assign it to the ErrorLog field.
 		ErrorLog:  slog.NewLogLogger(logger.Handler(), slog.LevelWarn),
