@@ -37,7 +37,7 @@ func main() {
 	// flag will be stored in the addr variable at runtime.
 	addr := flag.String("addr", ":4000", "HTTP networkd address")
 
-	dsn := flag.String("dsn", "postgres://root:root@127.0.0.1:5432/snippetbox?sslmode=disable", "Postges data source name")
+	dsn := flag.String("dsn", "postgres://root:root@127.0.0.1:5432/snippetbox?sslmode=disable", "PostgeSQL data source name")
 
 	// Importantly, we use the flag.Parse() function to parse the command-line flag.
 	// This read id the command-line flag value and assigns it to the addr

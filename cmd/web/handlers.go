@@ -7,19 +7,19 @@ import (
 	"strconv"
 
 	"github.com/raiesbo/snippetbox/internal/models"
-	"github.com/raiesbo/snippetbox/internal/validatior"
+	"github.com/raiesbo/snippetbox/internal/validator"
 )
 
 // Update our snippetCreateFomr struct to include struct tags which tell the
 // decoder how to map HTML form values into the differen tstruct fields. So, for
 // example, here we'are telling the decoder to store the value from th HTML form
-// input with the name "title" in th eTitle field. The struct tag `form:"-"`
+// input with the name "title" in the Title field. The struct tag `form:"-"`
 // tells the decoder to completely ingnore a field during decoding.
 type snippetCreateForm struct {
-	Title                string `form:"title"`
-	Content              string `form:"content"`
-	Expires              int    `form:"expires"`
-	validatior.Validator `form:"_"`
+	Title               string `form:"title"`
+	Content             string `form:"content"`
+	Expires             int    `form:"expires"`
+	validator.Validator `form:"_"`
 }
 
 // Define a snippetCreatForm struct to represent the form adata and validation
@@ -33,6 +33,14 @@ type snippetCreateForm struct {
 // 	Expires int
 // 	validatior.Validator
 // }
+
+// Create a new userSignupForm struct.
+type userSignupForm struct {
+	Name                string `form:"name"`
+	Email               string `form:"email"`
+	Password            string `form:"password"`
+	validator.Validator `form:"_"`
+}
 
 // Define a home handler funciton which writes a byte slice containing "hello from Snippetbox" as the response body.
 // Change the signature of the home handler so it is defined as method against *application.
@@ -121,10 +129,10 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 
 	// Because the Validator struct is embeded by the snippetCreateForm struct,
 	// we ca nall CehckField() directly on it to execute our validation checks.
-	form.CheckField(validatior.NotBlank(form.Title), "title", "This field can not be blank")
-	form.CheckField(validatior.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
-	form.CheckField(validatior.NotBlank(form.Content), "content", "This field cannot be blank")
-	form.CheckField(validatior.PermittedValue(form.Expires, 1, 7, 365), "expires", "This field must equal 1, 7 or 365")
+	form.CheckField(validator.NotBlank(form.Title), "title", "This field can not be blank")
+	form.CheckField(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
+	form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
+	form.CheckField(validator.PermittedValue(form.Expires, 1, 7, 365), "expires", "This field must equal 1, 7 or 365")
 
 	// If there are any validation errors, then redisplay the craete.tmpl template,
 	// passing in the snippetCreateForm instance as dynamic data in the Form
@@ -156,11 +164,62 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Display a form for signing up a new user...")
+	data := app.newTemplateCache(r)
+	data.Form = userSignupForm{}
+
+	app.render(w, r, http.StatusOK, "signup.tmpl", data)
 }
 
 func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Create a new user...")
+	// Declare an zero-valued instance of our userSignupForm struct
+	var form userSignupForm
+
+	// Parse the form data into the userSignupForm struct.
+	err := app.decodePostForm(r, &form)
+	if err != nil {
+		app.clientError(w, r, http.StatusBadRequest)
+		return
+	}
+
+	// Validate the form contents using our helper funcitons.
+	form.CheckField(validator.NotBlank(form.Name), "name", "This field cannot be blank")
+	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
+	form.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "This field must be a valid email address")
+	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
+	form.CheckField(validator.MinChars(form.Password, 8), "password", "This field must be at least 8 charactores long")
+
+	// If thhere are any errors, redisplay the signup form along with a 422
+	// status code.
+	if !form.Valid() {
+		data := app.newTemplateCache(r)
+		data.Form = form
+		app.render(w, r, http.StatusUnprocessableEntity, "signup.tmpl", data)
+		return
+	}
+
+	// Try to create a new user record in the database.. If the emmail already
+	// exists then add aan error message to the form and re-display it.
+	err = app.users.Insert(form.Name, form.Email, form.Password)
+	if err != nil {
+		if errors.Is(err, models.ErrDuplicateEamil) {
+			form.AddFieldError("error", "Email address is already in use")
+
+			data := app.newTemplateCache(r)
+			data.Form = form
+			app.render(w, r, http.StatusUnprocessableEntity, "signup.tmpl", data)
+		} else {
+			app.serverError(w, r, err)
+		}
+
+		return
+	}
+
+	// Otherwise add a confirmation fflash message to the session confiming that
+	// their signupworked.
+	app.sessionManager.Put(r.Context(), "flash", "Your signup was successful. Please log in.")
+
+	// And redirect the user to the login pages.
+	http.Redirect(w, r, "/user/login", http.StatusSeeOther)
 }
 
 func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {

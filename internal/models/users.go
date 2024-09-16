@@ -3,6 +3,9 @@ package models
 import (
 	"database/sql"
 	"time"
+
+	"github.com/lib/pq"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Define a new User struct. Notice how the field names and types align
@@ -22,6 +25,26 @@ type UserModel struct {
 
 // We'll user the Insert method to adda  new record to the "users" table
 func (m *UserModel) Insert(name, email, password string) error {
+	// Create a bcrypt hash of the plain-text password.
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	if err != nil {
+		return err
+	}
+
+	stmt := `INSERT INTO users (name, email, hashed_password, created)
+VALUES ($1, $2, $3, NOW()) RETURNING id;`
+
+	id := 0
+	err = m.DB.QueryRow(stmt, name, email, string(hashedPassword)).Scan(&id)
+	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok {
+			if pqErr.Code == "23505" {
+				return ErrDuplicateEamil
+			}
+		}
+		return err
+	}
+
 	return nil
 }
 
