@@ -10,7 +10,7 @@
         <input type="text" name="name" value="{{.Form.Name}}">
     </div>
     <div>
-        <label>Email:</div>
+        <label>Email:</label>
         {{with .Form.FieldErrors.email}}
             <label class="error">{{.}}</label>
         {{end}}
