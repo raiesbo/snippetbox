@@ -16,13 +16,26 @@ var EmailRX = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](
 
 // Define a new VAlidtor struct which contains a map of validato nerror messages
 // for our form fields.
+//
+// Add a new NonFieldErrors []string field to the struct, which we sill use to
+// hold any validation errors which are not related to a specific form field.
 type Validator struct {
-	FieldErrors map[string]string
+	NonFieldErrors []string
+	FieldErrors    map[string]string
 }
 
 // Valid() returns true if the FieldErrors map doesn't contain any entries.
+//
+// Updat the Valid() method to also check that the NonFieldErrors slice is
+// empty.
 func (v *Validator) Valid() bool {
-	return len(v.FieldErrors) == 0
+	return len(v.FieldErrors) == 0 && len(v.NonFieldErrors) == 0
+}
+
+// Create an AddNonFieldError() helpter for adding error messages to the new
+// NonFieldErrors slice.
+func (v *Validator) AddNonFieldErorrs(message string) {
+	v.NonFieldErrors = append(v.NonFieldErrors, message)
 }
 
 // AddFieldError() adds an error message to the FieldErrors map (so log as no

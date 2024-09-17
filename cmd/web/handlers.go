@@ -10,6 +10,12 @@ import (
 	"github.com/raiesbo/snippetbox/internal/validator"
 )
 
+// Define a snippetCreatForm struct to represent the form adata and validation
+// errors for the form fields. Note that all the struct fields are deliberately
+// exported (i.e. start with a capital letter). This is because structu fields
+// must be exported in order to be read by the html/template package when
+// rendering the template.
+//
 // Update our snippetCreateFomr struct to include struct tags which tell the
 // decoder how to map HTML form values into the differen tstruct fields. So, for
 // example, here we'are telling the decoder to store the value from th HTML form
@@ -22,21 +28,14 @@ type snippetCreateForm struct {
 	validator.Validator `form:"_"`
 }
 
-// Define a snippetCreatForm struct to represent the form adata and validation
-// errors for the form fields. Note that all the struct fields are deliberately
-// exported (i.e. start with a capital letter). This is because structu fields
-// must be exported in order to be read by the html/template package when
-// rendering the template.
-// type snippetCreateForm struct {
-// 	Title   string
-// 	Content string
-// 	Expires int
-// 	validatior.Validator
-// }
-
-// Create a new userSignupForm struct.
 type userSignupForm struct {
 	Name                string `form:"name"`
+	Email               string `form:"email"`
+	Password            string `form:"password"`
+	validator.Validator `form:"_"`
+}
+
+type userLoginForm struct {
 	Email               string `form:"email"`
 	Password            string `form:"password"`
 	validator.Validator `form:"_"`
@@ -223,7 +222,10 @@ func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Display a form for loggin in a user...")
+	data := app.newTemplateCache(r)
+	data.Form = userLoginForm{}
+
+	app.render(w, r, http.StatusOK, "login.tmpl", data)
 }
 
 func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
