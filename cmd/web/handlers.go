@@ -229,7 +229,60 @@ func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Authenticate and login the user...")
+	// Decode the form data into the userLoginForm struct.
+	var form userLoginForm
+
+	err := app.decodePostForm(r, &form)
+	if err != nil {
+		app.clientError(w, r, http.StatusBadRequest)
+		return
+	}
+
+	// Do some validation checks on the form. We check that both email and
+	// password are provided, and also check the format of the email address as
+	// a UX-nicety (in case the user makes a ty
+	form.CheckField(validator.NotBlank(form.Email), "email", "This field cannot be blank")
+	form.CheckField(validator.Matches(form.Email, validator.EmailRX), "email", "This field must be a valid email address")
+	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
+
+	if !form.Valid() {
+		data := app.newTemplateCache(r)
+		data.Form = form
+		app.render(w, r, http.StatusUnprocessableEntity, "login.tmpl", data)
+	}
+
+	// Check whether the credentials are valid. If ther're not, ad a generic
+	// non-field error message and re-display the login page.
+	id, err := app.users.Authenticate(form.Email, form.Password)
+	if err != nil {
+		if errors.Is(err, models.ErrInvalidCrredentials) {
+			form.AddNonFieldError("Email or password is incorrect")
+
+			data := app.newTemplateCache(r)
+			data.Form = form
+			app.render(w, r, http.StatusUnprocessableEntity, "login.tmpl", data)
+		} else {
+			app.serverError(w, r, err)
+		}
+		return
+	}
+
+	// Use the RenewToken()_ method on the current session to change tht session
+	// ID. It's good practice to generate a new session ID when templateCache
+	// authentication state or privilege levels changes for the user (e.g. login
+	// and logout operations).
+	err = app.sessionManager.RenewToken(r.Context())
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	// Add the ID of the cucrrent user to the sesion, so that they are not
+	// "logged in".
+	app.sessionManager.Put(r.Context(), "authenticatedUserId", id)
+
+	// Redirect the user to the create snippet page.
+	http.Redirect(w, r, "/snippet/create", http.StatusSeeOther)
 }
 
 func (app *application) userLogoutPost(w http.ResponseWriter, r *http.Request) {
