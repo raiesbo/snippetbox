@@ -50,7 +50,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := app.newTemplateCache(r)
+	data := app.newTemplateData(r)
 	data.Snippets = snippets
 
 	// use the new render helper.
@@ -83,7 +83,7 @@ func (app *application) snipppetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := app.newTemplateCache(r)
+	data := app.newTemplateData(r)
 	data.Snippet = snippet
 
 	// use the new render helper.
@@ -92,7 +92,7 @@ func (app *application) snipppetView(w http.ResponseWriter, r *http.Request) {
 
 // Add a snippetCreate handler function.
 func (app *application) snipppetCreate(w http.ResponseWriter, r *http.Request) {
-	data := app.newTemplateCache(r)
+	data := app.newTemplateData(r)
 
 	// Initialized a new createSnippetForm instance and pass it to the template.
 	// Notice how this is also a greate opportunity to set any default or
@@ -138,7 +138,7 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 	// field. Note that we use the HTTP status code 422 Unprocessable Entity
 	// when sendin the response to indicate that tehre was a validation error.
 	if !form.Valid() {
-		data := app.newTemplateCache(r)
+		data := app.newTemplateData(r)
 		data.Form = form
 		app.render(w, r, http.StatusUnprocessableEntity, "create.tmpl", data)
 		return
@@ -163,7 +163,7 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 }
 
 func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
-	data := app.newTemplateCache(r)
+	data := app.newTemplateData(r)
 	data.Form = userSignupForm{}
 
 	app.render(w, r, http.StatusOK, "signup.tmpl", data)
@@ -190,7 +190,7 @@ func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
 	// If thhere are any errors, redisplay the signup form along with a 422
 	// status code.
 	if !form.Valid() {
-		data := app.newTemplateCache(r)
+		data := app.newTemplateData(r)
 		data.Form = form
 		app.render(w, r, http.StatusUnprocessableEntity, "signup.tmpl", data)
 		return
@@ -203,7 +203,7 @@ func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, models.ErrDuplicateEamil) {
 			form.AddFieldError("email", "Email address is already in use")
 
-			data := app.newTemplateCache(r)
+			data := app.newTemplateData(r)
 			data.Form = form
 			app.render(w, r, http.StatusUnprocessableEntity, "signup.tmpl", data)
 		} else {
@@ -222,7 +222,7 @@ func (app *application) userSignupPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) userLogin(w http.ResponseWriter, r *http.Request) {
-	data := app.newTemplateCache(r)
+	data := app.newTemplateData(r)
 	data.Form = userLoginForm{}
 
 	app.render(w, r, http.StatusOK, "login.tmpl", data)
@@ -246,7 +246,7 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 	form.CheckField(validator.NotBlank(form.Password), "password", "This field cannot be blank")
 
 	if !form.Valid() {
-		data := app.newTemplateCache(r)
+		data := app.newTemplateData(r)
 		data.Form = form
 		app.render(w, r, http.StatusUnprocessableEntity, "login.tmpl", data)
 	}
@@ -258,7 +258,7 @@ func (app *application) userLoginPost(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, models.ErrInvalidCrredentials) {
 			form.AddNonFieldError("Email or password is incorrect")
 
-			data := app.newTemplateCache(r)
+			data := app.newTemplateData(r)
 			data.Form = form
 			app.render(w, r, http.StatusUnprocessableEntity, "login.tmpl", data)
 		} else {
