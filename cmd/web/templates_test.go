@@ -3,6 +3,8 @@ package main
 import (
 	"testing"
 	"time"
+
+	"github.com/raiesbo/snippetbox/internal/assert"
 )
 
 func TestHumanDate(t *testing.T) {
@@ -42,6 +44,9 @@ func TestHumanDate(t *testing.T) {
 			if hd != tt.want {
 				t.Errorf("got %q; want %q", hd, tt.want)
 			}
+			// Use the new assert.Equal() helper to compare the expected and
+			// actual values.
+			assert.Equal(t, hd, tt.want)
 		})
 	}
 
