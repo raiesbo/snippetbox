@@ -23,6 +23,9 @@ func (app *application) routes() http.Handler {
 	// file will be served (so long as it exists).
 	mux.Handle("GET /static/", http.FileServerFS(ui.Files))
 
+	// Add a new GET /ping route
+	mux.HandleFunc("GET /ping", ping)
+
 	// Create a file server shich serves files out of the "./ui/static" directory.
 	// Notes that the path given to the http.Dir function is relative to the project
 	// directory root.
